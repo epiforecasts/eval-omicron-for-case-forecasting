@@ -8,7 +8,7 @@
 	// To use a volume, use the following syntax (then clone your code):
 	//"workspaceMount": "source=eval-germany-sp-nowcasting,target=/eval-germany-sp-nowcasting,type=volume"
 	// To bind mount a volume, use the following syntax:
-	// "workspaceMount": "source=/home/epiforecasts/eval-germany-sp-nowcasting,target=/eval-germany-sp-nowcasting,type=bind,consistency=cached",
+ //"workspaceMount": "source=/home/epiforecasts/eval-omicron-for-case-forecasting,target=/eval-omicron-for-case-forecasting,type=bind,consistency=cached",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"r.rterm.linux": "/usr/local/bin/radian",
