@@ -91,6 +91,12 @@ Watch the workflow as it runs in a `shiny` app.
 targets::tar_watch(targets_only = TRUE)
 ```
 
+Objects from the workflow can be loaded into an interactive session using the following,
+
+```{r}
+targets::tar_load("<target>")
+```
+
 To use our archived version of the interim results (and so avoid long run times) use the following to download it. Note that this process has not been rigorously tested across environments and so may not work seamlessly).
 
 ```{r}
