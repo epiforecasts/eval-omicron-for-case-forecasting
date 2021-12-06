@@ -5,9 +5,8 @@ summarise_forecast_targets <- list(
     fit_summary,
     rbindlist(
       map(list(
-        single_retrospective_forecasts,
-        two_retrospective_forecasts,
-        two_scenario_forecasts
+        single_forecasts,
+        two_forecasts
       ), ~ .[, .(
         id, forecast_date, strains, overdispersion, variant_relationship,
         samples, max_rhat, divergent_transitions,
@@ -18,34 +17,22 @@ summarise_forecast_targets <- list(
   ),
   # Combine forecasts into a single data frame
   tar_target(
-    forecast_single_retro,
-    unnest_posterior(single_retrospective_forecasts, target = "forecast"),
+    forecast_singl,
+    unnest_posterior(single_forecasts, target = "forecast"),
   ),
   tar_target(
-    forecast_two_retro,
-    unnest_posterior(two_retrospective_forecasts, target = "forecast"),
-  ),
-  tar_target(
-    forecast_two_scenario,
-    unnest_posterior(two_scenario_forecasts, target = "forecast"),
+    forecast_two,
+    unnest_posterior(two_forecasts, target = "forecast"),
   ),
   # Combine all separate forecasts into a single data frame
   tar_target(
     forecast,
-    merge(
-      rbindlist(
-        list(
-          forecast_single_retro,
-          forecast_two_retro,
-          forecast_two_scenario
-        )
-      )[, location := source][, voc_scale := NULL],
-      data_availability_scenarios[
-        ,
-        voc_scale := map_chr(voc_scale, paste, collapse = ", ")
-      ],
-      by = "id", all.x = TRUE
-    ),
+    rbindlist(
+      list(
+        forecast_single,
+        forecast_two
+      )
+    )[, location := source],
   ),
   # Extract forecasts for cases only and link to current observations
   tar_target(

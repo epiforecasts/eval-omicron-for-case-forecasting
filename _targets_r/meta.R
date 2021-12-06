@@ -34,7 +34,7 @@ meta_targets <- list(
     c(
       stan_args,
       list(
-        horizon = 4, keep_fit = FALSE, voc_label = "Delta",
+        horizon = 4, keep_fit = FALSE, voc_label = "Omicron",
         probs = c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99)
       )
     ),

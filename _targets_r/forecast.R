@@ -1,7 +1,7 @@
 # Targets producing forecasts for each week of observed data
 forecast_targets <- list(
   tar_target(
-    single_retrospective_forecasts,
+    single_forecasts,
     do.call(
       forecast,
       c(
@@ -18,7 +18,7 @@ forecast_targets <- list(
     cross(retro_obs, overdispersion_scenarios)
   ),
   tar_target(
-    two_retrospective_forecasts,
+    two_forecasts,
     do.call(
       forecast,
       c(
