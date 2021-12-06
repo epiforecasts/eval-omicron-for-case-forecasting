@@ -1,5 +1,3 @@
-# 2021-08-27
+# 2021-12-06
 
-# 2021-08-26
-
-- Reorganised code to split analysis from modelling code which can be generalised to other problems.
+Initialized the repository based on work [evaluating the use of sequences for forecasting Delta case counts](https://github.com/epiforecasts/evaluate-delta-for-forecasting).

@@ -1,0 +1,12 @@
+Document | Purpose
+---|---
+[Summary](https://epiforecasts.io/eval-omicron-for-case-forecasting/) | A summary of this work.
+[Paper](https://epiforecasts.io/eval-omicron-for-case-forecasting/paper.pdf) | The academic paper write up of this work.
+[Supplementary information](https://epiforecasts.io/eeval-omicron-for-case-forecasting/si.html) | The supplementary information for the write up of this work.
+[Project README](https://github.com/epiforecasts/eval-omicron-for-case-forecasting) | Overarching project README. Includes links to resources, a summary of key files, and reproducibility information.
+[Analysis pipeline](https://github.com/epiforecasts/eval-omicron-for-case-forecasting/main/_targets.md) | The `targets` based analysis pipeline.
+[Analysis archive](https://github.com/epiforecasts/eval-omicron-for-case-forecasting/releases/tag/latest) | An archived version of the `_targets` directory. Download using `get_targets_archive()`.
+[Data](https://github.com/epiforecasts/eval-omicron-for-case-forecasting/blob/main/data/README.md) | Documentation for input data and summarised output from the analysis.
+[bin](https://github.com/epiforecasts/eval-omicron-for-case-forecasting/blob/main/bin/README.md) | Documentation for orchestration of nowcast estimation, publishing, and archiving.
+[News](https://github.com/epiforecasts/eval-omicron-for-case-forecasting/blob/main/NEWS.md) | Dated development notes.
+[epinowcast](https://epiforecasts.io/forecast.vocs) | The documentation for `forecast.vocs` the R package used to implement the models evaluated here.

@@ -33,13 +33,17 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         git2r \
         precommit \
         tinytex \
+        httpgd \
     && rm -rf /tmp/downloaded_packages
 
 
 RUN apt-get update \
      && export DEBIAN_FRONTEND=noninteractive \
      && apt-get -y install --no-install-recommends libglpk-dev libv8-dev \
-            pandoc-citeproc
+            pandoc-citeproc tmux
+
+# install and enable git lfs
+RUN apt-get -y install git-lfs && git-lfs install
 
 # add docthis
 RUN Rscript -e 'devtools::install_github("mdlincoln/docthis")'
@@ -47,7 +51,18 @@ RUN Rscript -e 'devtools::install_github("mdlincoln/docthis")'
 # install precommit
 RUN Rscript -e 'devtools::install_github("lorenzwalthert/precommit")'
 
+# install cmdstanr
+RUN Rscript -e 'devtools::install_github("stan-dev/cmdstanr")'
+
+# install cmdstan
+RUN mkdir -p /home/vscode/.cmdstan
+RUN Rscript -e 'cmdstanr::install_cmdstan("/home/vscode/.cmdstan")'
+RUN chmod -R ugo+rw /home/vscode/.cmdstan
+
+# make workspace directory
+RUN mkdir -p /eval-germany-sp-nowcasting
+RUN chmod -R ugo+rw /eval-germany-sp-nowcasting
+
 # install dependencies
-COPY renv renv
-COPY renv.lock renv.lock
-RUN R -e 'source("renv/activate.R"); renv::restore()'
+COPY DESCRIPTION /tmp/package/DESCRIPTION
+RUN Rscript -e "devtools::install_deps('/tmp/package', dependencies = TRUE)"

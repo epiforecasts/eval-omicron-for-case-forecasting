@@ -1,14 +1,14 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.183.0/containers/r
 {
-	"name": "R (Community)",
-	"build": {
-		"dockerfile": "Dockerfile",
-	        "context": "..",
-		// Update VARIANT to pick a specific R version: latest, ... ,4.0.1 , 4.0.0
-		"args": { "VARIANT": "latest" }
-	},
-
+	"name": "eval-omicron-for-case-forecasting",
+	"image": "ghcr.io/epiforecasts/eval-omicron-for-case-forecasting:main",
+	"workspaceFolder": "/eval-omicron-for-case-forecasting",
+	"shutdownAction": "none",
+	// To use a volume, use the following syntax (then clone your code):
+	//"workspaceMount": "source=eval-germany-sp-nowcasting,target=/eval-germany-sp-nowcasting,type=volume"
+	// To bind mount a volume, use the following syntax:
+	// "workspaceMount": "source=/home/epiforecasts/eval-germany-sp-nowcasting,target=/eval-germany-sp-nowcasting,type=bind,consistency=cached",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"r.rterm.linux": "/usr/local/bin/radian",
@@ -34,7 +34,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "Rscript -e 'precommit::use_precommit(); cmdstanr::install_cmdstan()'",
+	"postCreateCommand": "Rscript -e 'cmdstanr::set_cmdstan_path(); precommit::use_precommit()'",
 
 	// Uncomment to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker.
 	// "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],

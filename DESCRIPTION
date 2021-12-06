@@ -1,44 +1,56 @@
-Package: eval.delta.forecasting
-Title: Evaluating the impact of modelling strain dynamics on short-term
-    COVID-19 forecast performance
+Package: eval.omicron.case.forecasting
+Title: Evaluating the Impact of Modelling Omicron Strain Dynamics on Short-Term COVID-19 Forecast Performance
 Version: 0.1.0
 Authors@R: 
-    person(given = "Sam Abbott",
+    c(person(given = "Sam Abbott",
            role = c("aut", "cre"),
            email = "sam.abbott@lshtm.ac.uk",
-           comment = c(ORCID = "0000-0001-8057-8037"))
-Description: Evaluating the impact of modelling strain dynamics on
-    short-term COVID-19 forecast performance.
+           comment = c(ORCID = "0000-0001-8057-8037")),
+    person(given = "Sebastian",
+            family = "Funk",
+            role = c("aut"),
+            email = "sebastian.funk@lshtm.ac.uk",
+            comment = c(ORCID = "0000-0002-2842-3406")))
+Description: Evaluating the impact of modelling Omicron strain dynamics on short-term COVID-19 forecast performance
 License: MIT + file LICENSE
 Depends: 
     R (>= 2.10)
 Imports:
     callr,
+    cmdstanr,
     data.table,
-    forecast.vocs,
+    forcast.vocs,
     future,
     future.callr,
-    gh,
+    ggplot2,
+    gittargets,
     here,
-    jsonlite,
-    lubridate,
+    janitor,
+    knitr,
     purrr,
     rmarkdown,
-    knitr,
     scoringutils,
+    scales,
     tarchetypes,
     targets
 Suggests:
+    DT,
+    fs,
     git2r,
     lintr,
+    piggyback,
     precommit,
-    spelling
-    styler
+    spelling,
+    styler,
+    visNetwork
 VignetteBuilder: 
     knitr
 Remotes:
     epiforecasts/forecast.vocs,
-    lorenzwalthert/precommit
+    lorenzwalthert/precommit,
+    ropensci/piggyback,
+    stan-dev/cmdstanr,
+    wlandau/gittargets
 Encoding: UTF-8
 Language: en-GB
 LazyData: true
