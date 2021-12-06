@@ -5,3 +5,5 @@
 _targets
 *.html
 .DS_Store
+!docs/header.html
+!docs/footer.html
