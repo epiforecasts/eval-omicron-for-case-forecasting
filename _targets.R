@@ -8,8 +8,7 @@ plan(callr)
 
 # should the whole pipeline be run or just the validation steps
 validation <- TRUE
-sbc_datasets <- 10
-retrospective <- FALSE
+forecast <- TRUE
 
 # datasets of interest
 #sources <- list(source = c("Germany", "United Kingdom", "Belgium", "Italy"))
@@ -31,9 +30,9 @@ functions <- list.files(here("R"), full.names = TRUE)
 purrr::walk(functions, source)
 
 # load target modules
-targets <- list.files(here("targets"), full.names = TRUE)
+targets <- list.files(here("_targets_r"), full.names = TRUE)
 targets <- grep("*\\.R", targets, value = TRUE)
-targets <- targets[!grepl("targets/summarise_sources.R", targets)]
+targets <- targets[!grepl("_targets_r/summarise_sources.R", targets)]
 purrr::walk(targets, source)
 
 # branch targets across data sources (see individual targets scripts in
@@ -42,8 +41,7 @@ combined_targets <- tar_map(
   values = sources,
   c(
     obs_targets, # load source specific observations
-    forecast_targets, # retrospectice forecast
-    scenario_forecast_targets, # scenario forecasts
+    forecast_targets, # forecast
     summarise_forecast_targets, # summarise forecasts
     score_forecast_targets # score forecasts by source
   ),
@@ -51,7 +49,7 @@ combined_targets <- tar_map(
 )
 
 # Load summary targets
-source(here("targets/summarise_sources.R"))
+source(here("_targets_r/summarise_sources.R"))
 
 # Combine, evaluate, and summarise targets
 targets_list <- list(
@@ -61,12 +59,8 @@ targets_list <- list(
 if (validation) {
   # Prior and posterior checks across a range of scenarios
   targets_list <- c(targets_list, validation_targets)
-  if (sbc_datasets > 0) {
-    # Simulation based calibration across a range of scenarios
-    targets_list <- c(targets_list, sbc_targets)
-  }
 }
-if (retrospective) {
+if (forecast) {
   targets_list <- c(
     combined_targets, # Forecast all dates and scenarios
     summarise_source_targets # Summarise forecasts

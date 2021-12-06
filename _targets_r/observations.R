@@ -13,7 +13,7 @@ obs_targets <- list(
   # define the list of dates to forecast at
   tar_target(
     forecast_dates,
-    current_obs[!is.na(seq_available), ]$date[-c(1:3)]
+    current_obs[!is.na(seq_available), ]$date[-c(1:2)]
   ),
   # split data into that available in each forecast week
   tar_target(

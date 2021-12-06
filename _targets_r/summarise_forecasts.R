@@ -17,7 +17,7 @@ summarise_forecast_targets <- list(
   ),
   # Combine forecasts into a single data frame
   tar_target(
-    forecast_singl,
+    forecast_single,
     unnest_posterior(single_forecasts, target = "forecast"),
   ),
   tar_target(
