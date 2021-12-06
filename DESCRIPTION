@@ -24,7 +24,7 @@ Imports:
     callr,
     cmdstanr,
     data.table,
-    forcast.vocs,
+    forecast.vocs,
     future,
     future.callr,
     ggplot2,
