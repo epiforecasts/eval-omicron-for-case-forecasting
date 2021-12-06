@@ -62,77 +62,89 @@ validation_targets <- list(
         )
       )
     )[, likelihood := validate_likelihood],
-    cross(retro_validation_obs, variant_relationship_scenarios,
-          overdispersion_scenarios, validate_likelihood)
+    cross(
+      retro_validation_obs, variant_relationship_scenarios,
+      overdispersion_scenarios, validate_likelihood
+    )
   ),
   ## plot prior predictions for single model
   tar_target(
     plot_single_strain_prior,
     plot_single_strain_predictions(single_predictive_checks,
-                                   current_validation_obs,
-                                   likelihood = FALSE),
+      current_validation_obs,
+      likelihood = FALSE
+    ),
     format = "file"
   ),
   ## plot posterior predictions for single model
   tar_target(
     plot_single_strain_posterior,
     plot_single_strain_predictions(single_predictive_checks,
-                                   current_validation_obs,
-                                   likelihood = TRUE),
+      current_validation_obs,
+      likelihood = TRUE
+    ),
     format = "file"
   ),
   ## plot prior predictions for two strain model
   tar_target(
     plot_two_strain_prior_overdisp,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = FALSE, overdispersion = TRUE),
+      likelihood = FALSE, overdispersion = TRUE
+    ),
     format = "file"
   ),
   tar_target(
     plot_two_strain_prior,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = FALSE, overdispersion = FALSE),
+      likelihood = FALSE, overdispersion = FALSE
+    ),
     format = "file"
   ),
   tar_target(
     plot_two_strain_prior_overdisp_voc,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = FALSE, overdispersion = TRUE,
-                                type = "voc"),
+      likelihood = FALSE, overdispersion = TRUE,
+      type = "voc"
+    ),
     format = "file"
   ),
   tar_target(
     plot_two_strain_prior_voc,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = FALSE, overdispersion = FALSE,
-                                type = "voc"),
+      likelihood = FALSE, overdispersion = FALSE,
+      type = "voc"
+    ),
     format = "file"
   ),
   ## plot posterior predictions for two strain models
   tar_target(
     plot_two_strain_posterior_overdisp,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = TRUE, overdispersion = TRUE),
+      likelihood = TRUE, overdispersion = TRUE
+    ),
     format = "file"
   ),
   tar_target(
     plot_two_strain_posterior,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = TRUE, overdispersion = FALSE),
+      likelihood = TRUE, overdispersion = FALSE
+    ),
     format = "file"
   ),
   tar_target(
     plot_two_strain_posterior_overdisp_voc,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = TRUE, overdispersion = TRUE,
-                                type = "voc"),
+      likelihood = TRUE, overdispersion = TRUE,
+      type = "voc"
+    ),
     format = "file"
   ),
   tar_target(
     plot_two_strain_posterior_voc,
     plot_two_strain_predictions(two_predictive_checks, current_validation_obs,
-                                likelihood = TRUE, overdispersion = FALSE,
-                                type = "voc"),
+      likelihood = TRUE, overdispersion = FALSE,
+      type = "voc"
+    ),
     format = "file"
   )
 )

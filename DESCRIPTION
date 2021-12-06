@@ -28,14 +28,18 @@ Imports:
     future,
     future.callr,
     ggplot2,
+    gh,
     gittargets,
     here,
     janitor,
+    jsonlite,
     knitr,
+    lubridate,
     purrr,
     rmarkdown,
     scoringutils,
     scales,
+    stringr,
     tarchetypes,
     targets
 Suggests:
@@ -45,6 +49,7 @@ Suggests:
     lintr,
     piggyback,
     precommit,
+    remotes,
     spelling,
     styler,
     visNetwork

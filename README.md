@@ -17,7 +17,7 @@ cite [`forecast.vocs`](https://epiforecasts.io/forecast.vocs):
 ## Documentation
 
 | Document                                                                                                  | Purpose                                                                                                           |
-|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | [Summary](https://epiforecasts.io/eval-omicron-for-case-forecasting/)                                     | A summary of this work.                                                                                           |
 | [Paper](https://epiforecasts.io/eval-omicron-for-case-forecasting/paper.pdf)                              | The academic paper write up of this work.                                                                         |
 | [Supplementary information](https://epiforecasts.io/eeval-omicron-for-case-forecasting/si.html)           | The supplementary information for the write up of this work.                                                      |
@@ -32,7 +32,7 @@ cite [`forecast.vocs`](https://epiforecasts.io/forecast.vocs):
 ## Key files and folders
 
 | Folder/File                       | Purpose                                                                          |
-|-----------------------------------|----------------------------------------------------------------------------------|
+| --------------------------------- | -------------------------------------------------------------------------------- |
 | [`writeup`](writeup/)             | Summary paper and additional supplementary information as `Rmarkdown` documents. |
 | [`_targets.R`](_targets.R)        | Analysis workflow. Combines separate sections from[`_targets_r`](_targets_r).    |
 | [`R`](R/)                         | R functions used in the analysis and for evaluation.                             |
@@ -84,19 +84,25 @@ bash bin/update-targets.sh
 Alternative the following `targets` functions may be used to
 interactively explore the workflow:
 
--   Run the workflow sequentially.
+  - Run the workflow sequentially.
+
+<!-- end list -->
 
 ``` r
 targets::tar_make()
 ```
 
--   Run the workflow using all available workers.
+  - Run the workflow using all available workers.
+
+<!-- end list -->
 
 ``` r
 targets::tar_make_future(workers = future::availableCores())
 ```
 
--   Explore a graph of the workflow.
+  - Explore a graph of the workflow.
+
+<!-- end list -->
 
 ``` r
 targets::tar_visnetwork(targets_only = TRUE)

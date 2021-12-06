@@ -10,14 +10,15 @@ plan(callr)
 validation <- TRUE
 forecast <- TRUE
 
-# datasets of interest
-#sources <- list(source = c("Germany", "United Kingdom", "Belgium", "Italy"))
+# datasets of interest (based on availability in the covariants source)
 sources <- list(source = "Germany")
 
 # load required packages and watch forecast.vocs for changes
 tar_option_set(
-  packages = c("forecast.vocs", "purrr", "data.table", "scoringutils",
-               "ggplot2", "here", "stringr"),
+  packages = c(
+    "forecast.vocs", "purrr", "data.table", "scoringutils",
+    "ggplot2", "here", "stringr"
+  ),
   deployment = "worker",
   memory = "transient",
   workspace_on_error = TRUE,

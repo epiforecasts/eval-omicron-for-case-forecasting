@@ -81,7 +81,7 @@ covariants_file_commits <- function(path = "cluster_tables/21A.Delta_data.json")
     "/repos/hodcroftlab/covariants/commits?path={path}",
     owner = "hodcroftlab",
     repo = "covariants",
-    path = path, 
+    path = path,
     .limit = 1000
   )
 
