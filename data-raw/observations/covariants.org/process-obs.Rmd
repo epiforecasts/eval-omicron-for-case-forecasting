@@ -1,0 +1,378 @@
+---
+title: "Aggregate case notification and sequence data for ECDC case studies"
+output: github_document
+---
+```{r packages}
+library(data.table)
+library(jsonlite)
+library(gh)
+library(purrr)
+library(ggplot2)
+library(here)
+library(covidregionaldata)
+```
+
+## Case notification data
+
+- Load truth data from the ECDC via the ECDC forecasting hub and process.
+
+```{r}
+cases <- fread("https://raw.githubusercontent.com/epiforecasts/covid19-forecast-hub-europe/main/data-truth/JHU/truth_JHU-Incident%20Cases.csv") # nolint
+
+# Format date
+cases[, date := as.Date(date)]
+
+# Order data by date and location
+setkey(cases, location_name, date)
+
+# Summarise to weekly cases starting on Saturday to Sync with the forecast hubs
+cases[, cases := frollsum(value, n = 7), by = c("location_name")]
+
+# Filter from the 1st of January and keep only Saturdays
+cases <- cases[date >= as.Date("2021-01-01")]
+cases <- cases[weekdays(date) %in% "Saturday"]
+
+# Only most recent case data is available
+cases[, cases_available := date]
+
+# Drop unnecessary columns
+set(cases, j = c("value"), value = NULL)
+
+# Summary
+summary(cases)
+```
+
+## Sequence notification data
+
+- Define a function to download, load, and process sequence data from [covariants.org](https://covariants.org) (which itself process sequence data from [GISAID](https://www.gisaid.org)).
+
+```{r}
+download_covariants_sequences <- function(sha, path = "cluster_tables/21A.Delta_data.json") { # nolint
+  if (missing(sha)) {
+    url <- paste0(
+      "https://raw.githubusercontent.com/hodcroftlab/covariants/master/", path
+    )
+  } else {
+    url <- paste(
+      "https://raw.githubusercontent.com/hodcroftlab/covariants",
+      sha, path,
+      sep = "/"
+    )
+  }
+  sequences <- jsonlite::fromJSON(url)
+  sequences <- purrr::map(sequences, as.data.table)
+  sequences <- data.table::rbindlist(sequences, idcol = "location_name")
+  return(sequences[])
+}
+```
+
+- Test by downloading the latest available data
+
+```{r}
+latest_sequences <- download_covariants_sequences()
+latest_sequences
+```
+
+- Get the commits to the target file in order to construct retrospective data
+
+```{r}
+covariants_file_commits <- function(path = "cluster_tables/21A.Delta_data.json") { # nolint
+  commits <- gh::gh(
+    "/repos/hodcroftlab/covariants/commits?path={path}",
+    owner = "hodcroftlab",
+    repo = "covariants",
+    path = path, 
+    .limit = 1000
+  )
+
+  commits <- purrr::map(
+    commits,
+    ~ data.table(
+      date = as.Date(as.character(.$commit$committer$date)),
+      datetime = lubridate::as_datetime(
+        as.character(.$commit$committer$date)
+      ),
+      author = .$commit$committer$name,
+      message = .$commit$message,
+      sha = .$sha
+    )
+  )
+  commits <- data.table::rbindlist(commits)
+  return(commits[])
+}
+
+delta_sequence_commits <- covariants_file_commits()
+delta_sequence_commits
+```
+
+- Keep only the last commits from any given day and download data from this commit.
+
+```{r}
+sequences <- delta_sequence_commits[order(date)][,
+  .SD[datetime == max(datetime)],
+  by = date
+]
+setnames(sequences, "date", "seq_available")
+sequences[, data := purrr::map(sha, download_covariants_sequences)]
+sequences <- sequences[, rbindlist(data), by = seq_available]
+sequences
+```
+
+- Select and rename variables of interest.
+
+```{r}
+sequences <- sequences[
+  ,
+  .(
+    seq_available = seq_available,
+    location_name,
+    week_starting = as.Date(week),
+    week_ending = as.Date(week) + 6,
+    seq_voc = unsmoothed_cluster_sequences,
+    seq_total = unsmoothed_total_sequences
+  )
+][, share_voc := seq_voc / seq_total][]
+sequences
+```
+
+## Filter, merge, and save cases notifications and sequences
+
+- Filter sequences to include dates by location starting from when two consecutive weeks have at least two sequences that were positive for the Delta variant and the Delta variant makes up at least 0.001% of available sequences. This filtering step is based on the last available data and then used as a common starting point across all releases. First find the introduction week for each location based on these filtering steps.
+
+```{r}
+first_seq <- sequences[,
+  .SD[seq_available == max(seq_available)][
+    seq_voc >= 2 & shift(seq_voc, type = "lead") >= 2
+  ][
+    share_voc >= 0.001 & shift(share_voc, type = "lead") >= 0.001
+  ][
+    order(week_ending)
+  ][1, ],
+  by = "location_name"
+][!is.na(seq_voc)][]
+first_seq
+```
+
+- Restrict included sequences to start from these introduction dates.
+
+```{r}
+filt_sequences <- merge(
+  sequences, first_seq[, .(location_name, intro_date = week_ending)],
+  by = "location_name"
+)
+filt_sequences <- filt_sequences[week_ending >= intro_date][
+  ,
+  intro_date := NULL
+][]
+```
+
+- Find the week in each location when 99% of sequences are positive for Delta in the final sequence data for two consequetive weeks and more than 10 sequences are available.
+
+```{r}
+last_seq <- sequences[seq_available == max(seq_available)][,
+  .SD[seq_total > 10][
+    share_voc >= 0.99 & shift(share_voc, type = "lead") >= 0.99
+  ][
+    order(week_ending)
+  ][1, ],
+  by = "location_name"
+][!is.na(seq_voc)][]
+last_seq
+```
+
+- Restrict included sequences to stop at these dates.
+
+```{r}
+filt_sequences <- merge(
+  filt_sequences, last_seq[, .(location_name, end_date = week_ending)],
+  by = "location_name"
+)
+filt_sequences[is.na(end_date), end_date := max(week_ending),
+  by = "location_name"
+]
+filt_sequences <- filt_sequences[week_ending <= end_date][
+  ,
+  end_date := NULL
+][]
+```
+
+- Filter case notifications to start 4 weeks prior to the introduction date of the Delta variant and to stop 4 weeks after Delta has become dominant. Sequences are collected aggregated by week from Sunday whilst cases are aggregated from Saturday so shift start and end dates for sequences by a day.
+
+```{r}
+filt_cases <- Reduce(
+  function(x, y) {
+    merge(x, y, by = "location_name", all.x = TRUE)
+  },
+  list(
+    cases,
+    first_seq[, .(location_name, intro_date = week_ending - 1)],
+    last_seq[, .(location_name, end_date = week_ending - 1)]
+  )
+)
+filt_cases <- filt_cases[date >= (intro_date - 7 * 4)]
+filt_cases <- filt_cases[date <= (end_date + 7 * 4)]
+filt_cases[, c("intro_date", "end_date") := NULL]
+```
+
+
+- Merge duplicating case data for all sequence versions. Sequences are only available aggregated by week from Sunday. Approximate the same timespan as the case data by changing the weekly reference date
+```{r}
+adjusted_seq <- copy(filt_sequences)[
+  ,
+  date := week_ending - 1
+][, c("week_starting", "week_ending") := NULL]
+
+notifications <- merge(filt_cases, adjusted_seq,
+  by = c("date", "location_name"), all.x = TRUE
+)
+setorder(notifications, seq_available)
+setorder(notifications, location_name, date)
+setorderv(notifications, c("location_name", "date", "seq_available"))
+```
+
+- Check data for negative values and drop countries if present
+
+```{r}
+problem_countries <- unique(
+  notifications[cases < 0 | seq_total < 0]$location_name
+)
+problem_countries
+notifications <- notifications[!(location_name %in% problem_countries)]
+```
+
+- Save and summarise filtered notification data.
+
+```{r}
+# save to observations folder
+fwrite(notifications, file = here("data/observations/covariants.csv"))
+
+# Summary
+summary(notifications)
+```
+
+## Explore notifications
+
+- Case notifications;
+
+```{r cases}
+not_cases <- unique(notifications[, .(date, cases, location_name)])
+# plot cases
+ggplot(not_cases) +
+  aes(x = date, y = cases, col = location_name) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+- Case notifications normalised by maximum number of notifications in that location.
+```{r normalised-by-max}
+ggplot(copy(not_cases)[, cases := cases / max(cases), by = "location_name"]) +
+  aes(x = date, y = cases, col = location_name) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+- Compare case notifications in Germany in this data with case notifications in the RKI data source and the WHO data source.
+
+```{r rki-vs-covariants-cases}
+# get comparison data sources
+rki <- fread(here("data", "observations", "rki.csv"))
+who <- setDT(
+  covidregionaldata::get_national_data(
+    "Germany", source = "WHO", verbose = FALSE
+  )
+)
+# make the who data source weekly
+who[, cases := frollsum(cases_new, n = 7)]
+who <- who[weekdays(date) %in% "Saturday"]
+
+germany <- rbind(
+  unique(rki[, .(date = as.Date(date), cases, source = "RKI")]),
+  not_cases[location_name == "Germany"][,
+     .(date, cases, source = "JHU")],
+  who[date >= min(rki$date) & date <= max(rki$date)][,
+      .(date, cases = cases, source = "WHO")]
+)
+
+ggplot(germany) +
+  aes(x = date, y = cases, col = source) +
+  geom_point(size = 1.4, alpha = 0.8) +
+  geom_line(size = 1.1, alpha = 0.6) +
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(x = "Date", y = "COVID-19 notifications", col = "Source")
+```
+
+- Share of sequences that were positive for the Delta variant based on the lastest available data.
+
+```{r latest-share-voc}
+ggplot(notifications[seq_available == max(seq_available, na.rm = TRUE)]) +
+  aes(x = date, y = share_voc, col = location_name) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+
+- Share of sequences that were positive for the Delta variant based on the first available data.
+
+```{r first-share-voc}
+ggplot(notifications[seq_available == min(seq_available, na.rm = TRUE)]) +
+  aes(x = date, y = share_voc, col = location_name) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+- Share of sequences positive for Delta by availability
+
+```{r share-voc-by-avail, fig.width = 16, fig.height = 16}
+ggplot(
+  notifications[!is.na(seq_available)][
+    ,
+    seq_available := as.factor(seq_available)
+  ]
+) +
+  aes(x = date, y = share_voc, col = seq_available) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  facet_wrap(vars(location_name))
+```
+
+- Relative change in the proportion of sequences that were Delta between each release of sequence data and the latest available release.
+
+```{r sequences-change, fig.width = 16, fig.height = 16} 
+latest_seq <- notifications[,
+  n := .N,
+  by = c("date", "location_name")
+][, .SD[seq_available == max(seq_available)],
+  by = c("date", "location_name")
+][n > 1]
+
+seq_change <- merge(
+  notifications[!is.na(seq_available)][
+    ,
+    seq_available := as.factor(seq_available)
+  ][
+    ,
+    .(location_name, date, share_voc, seq_available)
+  ],
+  latest_seq[, .(location_name, date, latest_voc = share_voc)],
+  by = c("location_name", "date")
+)
+
+seq_change[, per_latest := share_voc / latest_voc]
+
+seq_change <- seq_change[date <= as.Date("2021-09-01")]
+
+ggplot(seq_change) +
+  aes(x = date, y = per_latest, col = seq_available, group = seq_available) +
+  geom_point(size = 1.1, alpha = 0.8) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  facet_wrap(vars(location_name), scales = "free")
+```

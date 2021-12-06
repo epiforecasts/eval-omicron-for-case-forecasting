@@ -1,0 +1,131 @@
+---
+title: "Aggregate case notification and sequence data for Germany"
+output: github_document
+---
+```{r packages}
+library(data.table)
+library(ggplot2)
+library(here)
+```
+
+## Case notification data
+
+- Load truth data from the RKI via the Germany/Poland forecasting hub and process.
+
+```{r}
+cases <- fread("https://raw.githubusercontent.com/KITmetricslab/covid19-forecast-hub-de/master/data-truth/RKI/truth_RKI-Incident%20Cases_Germany.csv") # nolint
+
+# Restrict to cases in Germany and format date
+cases <- cases[location == "GM"]
+cases[, date := as.Date(date)]
+
+# Summarise to weekly cases starting on Saturday to Sync with the forecast hubs
+cases[, cases := frollsum(value, n = 7)]
+
+# Filter from the 20th March and keep only Saturdays
+cases <- cases[date >= as.Date("2021-03-20")]
+cases <- cases[weekdays(date) %in% "Saturday"]
+
+# Only most recennt case data is available
+cases[, cases_available := date]
+
+# Drop unnecessary columns
+set(cases, j = c("value", "location", "location_name"), value = NULL)
+
+# Summary
+summary(cases)
+```
+
+## Sequence notification data
+
+- Sequence data sourced from RKI reports see the SI for more details.
+```{r}
+sequences <- fread("https://raw.githubusercontent.com/dwolffram/covid19-variants/main/data/sequencing_germany.csv") # nolint
+
+# Get total sequence count
+sequences[, seq_total := rowSums(.SD, na.rm = TRUE),
+  .SDcols = grep("_count", colnames(sequences))
+]
+
+# Pull out and format variables of interest
+sequences <- sequences[
+  ,
+  .(
+    date = week_end, seq_total, seq_voc = B.1.617.2_count,
+    share_voc = B.1.617.2_proportion / 100, seq_available
+  )
+]
+
+# Check sequence totals and proportions
+sequences[, est_seq_total := seq_voc / share_voc]
+
+# Replace proprotion using totals and voc sequences
+sequences[, share_voc := seq_voc / seq_total][, est_seq_total := NULL]
+
+# Include sequences from 18th of April
+sequences <- sequences[date >= as.Date("2021-04-18")]
+
+# Summary
+summary(sequences)
+```
+
+## Merge, explore, and save data
+
+- Merge duplicating case data for all sequence versions. Sequences are only available aggregated by week from Sunday. Approximate the same timespan as the case data by changing the weekly reference date
+```{r}
+notifications <- merge(cases, copy(sequences)[, date := date - 1],
+  by = "date", all.x = TRUE
+)
+
+notifications[, `:=`(location_name = "Germany", location = "DE")]
+setcolorder(notifications, c("date", "location_name", "location"))
+
+# save to observations folder
+fwrite(notifications, file = here("data/observations/rki.csv"))
+
+# Summary
+summary(notifications)
+```
+
+- Plot cases in Germany
+
+```{r cases}
+ggplot(unique(notifications[, .(date, cases)])) +
+  aes(x = date, y = cases) +
+  geom_col(alpha = 0.8) +
+  theme_bw()
+```
+
+- Plot proportion of sequences that were Delta by sequence availability date.
+
+```{r sequences}
+ggplot(notifications[!is.na(share_voc)]) +
+  aes(x = date, y = share_voc, col = seq_available, group = seq_available) +
+  geom_point(size = 1.1, alpha = 0.8) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+- Plot relative change in the proportion of sequences that were Delta between each release of sequence data and the latest available release.
+
+```{r sequences-change} 
+latest_seq <- notifications[, .SD[seq_available == max(seq_available)],
+  by = date
+]
+
+seq_change <- merge(
+  notifications[, .(date, share_voc, seq_available)],
+  latest_seq[, .(date, latest_voc = share_voc)],
+  by = "date"
+)
+
+seq_change[, per_latest := share_voc / latest_voc]
+
+ggplot(seq_change) +
+  aes(x = date, y = per_latest, col = seq_available, group = seq_available) +
+  geom_point(size = 1.1, alpha = 0.8) +
+  geom_line(alpha = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```

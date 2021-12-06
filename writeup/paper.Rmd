@@ -1,0 +1,192 @@
+---
+title: "Evaluating the impact of modelling strain dynamics on short-term COVID-19 forecast performance"
+output: 
+  rmarkdown::html_vignette: default
+  pdf_document: default
+  html_document:
+    keep_md: true
+    toc: true
+    theme: united
+  word_document: default
+bibliography: library.bib
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
+header-includes:
+   - \usepackage{float}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, eval = TRUE,
+  fig.width = 9, fig.height = 9,
+  dpi = 320,
+  fig.path = "figures/"
+)
+```
+
+```{r, message = FALSE}
+library(forecast.vocs)
+```
+
+## Authors
+
+S. Abbott (1), J. Bracher (2), S. Funk (1), ... (TBD)
+
+Correspondence to: sam.abbott@lshtm.ac.uk
+
+## Affiliations
+
+1. Center for the Mathematical Modelling of Infectious Diseases, London School of Hygiene & Tropical Medicine, London WC1E 7HT, United Kingdom
+2. Chair of Statistics and Econometrics, Karlsruhe Institute of Technology (KIT), Karlsruhe, Germany
+
+## Abstract
+
+**Background:**
+
+Changes in the dynamics of reported cases of COVID-19 have been difficult to predict even at short time horizons. In the presence of representative viral sequencing data, however, changing overall trends due to a shift in dominant variant should in principle be predictable. This aspect has been part of the public debate in many countries. However, it remains under-evaluated as a tool for short-term forecasting efforts.
+
+**Methods:** 
+
+We retrospectively evalute the short-term forecasting performance of a two strain autoregressive branching process model in comparison to the same model without strain dynamics and to the ECDC forecasting hub ensemble in Germany and the United Kingdom from the first detection of the Delta variant until it made up >98% of cases. We also explore the impact of noisy and lagged sequencing data and the presence of prior evidence for increased transmissibility on performance using simulated scenarios.
+
+**Results:** 
+
+
+**Conclusions:** 
+
+## Introduction
+
+### Why
+
+Changes in the dynamics of reported cases of COVID-19 have been difficult to predict even at short time horizons. In the presence of representative viral sequencing data, however, changing overall trends due to a shift in dominant variant should in principle be predictable. This aspect has been part of the public debate in many countries. However, it remains under-evaluated as a tool for short-term forecasting efforts.
+
+### What else has been done
+
+- Other papers looking at this specific question
+- Published forecasting models that include strain dynamics but don't assess contribution to short term forecasts.
+- Confounded by lots of other model complexities and changes
+- Simple models, explored in a systematic grid of information richness
+
+### What did we do
+
+In this study, we aim to retrospectively evalute the short-term forecasting performance of explicitly modelling COVID-19 strain dynamics during a transition from one dominant strain to another across several geographies and a range of simulated data availability scenarios. We use a range of simplistic modelling approaches in order to quantify the impact of modelling strain dynamics only versus other factors. Finally, we compare our retrospective forecasts to a multi-model ensemble of forecasts produced in real time for the same locations and discuss differences in performance. 
+
+
+## Methods
+
+### Data
+
+Notification data for Germany was sourced from ...
+Sequence data for Germany was sourced from ...
+
+Notification data for the United Kingdom was sourced from ...
+Sequence data for the United Kingdom was sourced from ...
+
+### Models
+
+#### Single strain
+
+We model the mean ($\lambda_t$) of reported COVID-19 cases ($C_t$) as an order 1 autoregressive (AR(1)) process on the log scale by week ($t$). We then assume a negative binomial observation model with overdispersion $\phi_c$ for reported cases ($C_t$). See the Supplementary Information for futher details.
+
+#### Two strain
+
+We model strain dynamics using the single strain model as a starting point but with the addition of strain specific AR(1) variation and a beta binomial observation process for sequence data. Strain dynamics are modelled to be either fully independent from each other, pooled via nested random walks, or fully dependent excluding a single transmissibility scaling factor. The full two strain model is described in the Supplementary Information. 
+
+#### Fitting
+
+Each forecast target was fit independently for each model using Markov-chain Monte Carlo (MCMC) in stan [@rstan]. A minimum of 4 chains were used with a warmup of 1000 samples and a total of 4000 samples post warmup. Convergence was assessed using the R hat diagnostic [@rstan]. All forecasts used an adapt delta of 0.99 and a max treedepth of 15. A small percentage of divergent transitions were observed for all forecasts (<0.5%). Models were evaulated using prior and posterior checks as well as simulation-based calibration. See the Supplementary Information for further details.
+
+### Real-world evaluation
+
+We forecast COVID-19 notified cases four weeks ahead each week from the week where DELTA variant was first detected for both Germany and the United Kingdom until the DELTA variant made up >98% of all detected cases. Forecasts were analysed by visual inspection as well using the following scoring metrics: The weighted interval score (WIS), the relative interval score (rWIS, scaled to the single strain model), absolute error, sharpness, overprediction, underprediction, bias, and empirical coverage of the 50% and 90% prediction intervals. Scores were computed per forecast date, forecast horizon, and country. They were then aggregated using the mean, median and standard deviation. Aggregate Scores were then quantitatively compared and the distribution of scores was visually inspected. Two week ahead predictions were used as the baseline with forecasts at other horizons being compared to this. Forecast scores were compared to scores for the all model hub ensemble for Germany and Poland from the ECDC forecasting hub [@EuroHub]. All scores were calculated using the scoringutils R package [@scoringutils].
+
+For the two strain model we also evaluated the four week ahead forecasts of the fraction of cases that were sequenced with the DELTA variant and discussed this in the context of forecast performance for notified COVID-19 cases. 
+
+### Data availability scenarios
+
+In order to simulate unobserved scenarios and explore the impact of data availability and prior information we explored the following combinations of scenarios:
+
+- Sequence data available with no delay, a 1 week delay, a 2 week delay, or a 3 week delay.
+- Sequence sample size at 100% of actual, 50% of actual, 25% of actual, or 10% of actual.
+- Prior knowledge of transmissibility difference: N(0.2, 0.2), N(0, 0.5), UK literature estimate from initial introduction (Adam), retrospective posterior as prior.
+
+Model forecast performance in these scenarios was assessed using the same approach as outlined above for the real-world performance evaluation using the single strain model as a baseline.
+
+### Comparison to prospective ensemble forecasts
+
+- Summarise Germany/Poland Hub ensemble and submission process etc.
+- Score one and two strain models along with the ensemble
+- Present summarised results and disucss differences and implications.
+
+### Reproducibility
+
+All analysis was carried out using R version 4.0.5 [@R]. The models and the tools to use them are available as an R package. The analysis pipeline described here is available as a `targets` workflow [@targets] along with an archive of all interim results. A dockerfile has been made available with the code to enhance reproducibility [@Boettiger:2015dw].
+
+## Results
+
+### Real-world performance
+
+#### Overview
+
+ - Plot of performance over time + forecasts over time.
+ - Table of performance across all models at two week horizon.
+ - Plot of relative performance by horizon and location.
+ - Plot of relative performance by percentage of cases that are Delta by horizon and location
+ - SI table of performance for other time horizons.
+
+### Data availability scenarios
+
+#### Overview
+
+## Discussion
+
+**Summary**
+
+**Strengths and weaknesses**
+
+- **Strengths:**
+  - Single framework in which only modelling of variants is different
+  - Evaluation of multiple synthetic scenarios gives insights not available from real world applications alone.
+
+- **Weaknesses:**
+  - Not actually realised real world performance as missed window to use.
+  - Real world case studies both showed the same dynamics of transitioning from a decreasing to an increasing epidemic.
+
+**Literature comparison**
+
+**Further work**
+
+- Evaluate the benefit of modelling spatial heterogeneity to capture known dynamics such as multiple disease strains. 
+ 
+**Conclusions**
+
+- Modelling multiple strains may improve the performance of short term forecasts where there is reasonable confidence that a has differing transmissibility. 
+- In scenarios where sequencing data is delayed or the number of sequences that are available is low modelling strain dynamics may results in worse performing forecasts.
+
+**Data availability**
+
+Zenodo:
+
+This project contains the following underlying data:
+
+
+License: MIT
+
+**Software availability**
+
+Source code is available from: 
+
+Archived source code at time of publication: 
+
+License: MIT
+
+**Grant information**
+
+This work was supported by the Wellcome Trust through a Wellcome Senior Research Fellowship to SF [210758].
+
+**Competing interests**
+
+There are no competing interests. 
+
+## References
+
+<div id = 'refs'></div>

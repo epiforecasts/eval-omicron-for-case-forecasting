@@ -1,0 +1,46 @@
+Package: eval.delta.forecasting
+Title: Evaluating the impact of modelling strain dynamics on short-term
+    COVID-19 forecast performance
+Version: 0.1.0
+Authors@R: 
+    person(given = "Sam Abbott",
+           role = c("aut", "cre"),
+           email = "sam.abbott@lshtm.ac.uk",
+           comment = c(ORCID = "0000-0001-8057-8037"))
+Description: Evaluating the impact of modelling strain dynamics on
+    short-term COVID-19 forecast performance.
+License: MIT + file LICENSE
+Depends: 
+    R (>= 2.10)
+Imports:
+    callr,
+    data.table,
+    forecast.vocs,
+    future,
+    future.callr,
+    gh,
+    here,
+    jsonlite,
+    lubridate,
+    purrr,
+    rmarkdown,
+    knitr,
+    scoringutils,
+    tarchetypes,
+    targets
+Suggests:
+    git2r,
+    lintr,
+    precommit,
+    spelling
+    styler
+VignetteBuilder: 
+    knitr
+Remotes:
+    epiforecasts/forecast.vocs,
+    lorenzwalthert/precommit
+Encoding: UTF-8
+Language: en-GB
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
