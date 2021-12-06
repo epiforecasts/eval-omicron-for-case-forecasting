@@ -34,23 +34,17 @@ meta_targets <- list(
     c(
       stan_args,
       list(
-        horizon = 4, keep_fit = FALSE, voc_label = "Omicron",
+        voc_scale = c(0.5, 0.25), voc_label = "Omicron",
+        horizon = 8, keep_fit = FALSE,
         probs = c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99)
       )
     ),
     deployment = "main"
   ),
-  # Arguments passed to `forecast()` to control retrospective forecasting
-  tar_target(
-    retro_args,
-    list(
-      voc_scale = c(0.5, 0.25)
-    )
-  ),
   # Data source to use for model validation
   tar_target(
     validation_source,
-    "Germany"
+    "United Kingdom"
   ),
   # Forecast dates to use for model validation
   tar_target(

@@ -9,7 +9,6 @@ library(gh)
 library(purrr)
 library(ggplot2)
 library(here)
-library(covidregionaldata)
 ```
 
 ## Case notification data
@@ -28,8 +27,8 @@ setkey(cases, location_name, date)
 # Summarise to weekly cases starting on Saturday to Sync with the forecast hubs
 cases[, cases := frollsum(value, n = 7), by = c("location_name")]
 
-# Filter from the 1st of January and keep only Saturdays
-cases <- cases[date >= as.Date("2021-01-01")]
+# Filter from the 1st of October and keep only Saturdays
+cases <- cases[date >= as.Date("2021-10-01")]
 cases <- cases[weekdays(date) %in% "Saturday"]
 
 # Only most recent case data is available
@@ -47,7 +46,7 @@ summary(cases)
 - Define a function to download, load, and process sequence data from [covariants.org](https://covariants.org) (which itself process sequence data from [GISAID](https://www.gisaid.org)).
 
 ```{r}
-download_covariants_sequences <- function(sha, path = "cluster_tables/21A.Delta_data.json") { # nolint
+download_covariants_sequences <- function(sha, path = "cluster_tables/21K.Omicron_data.json") { # nolint
   if (missing(sha)) {
     url <- paste0(
       "https://raw.githubusercontent.com/hodcroftlab/covariants/master/", path
@@ -76,7 +75,7 @@ latest_sequences
 - Get the commits to the target file in order to construct retrospective data
 
 ```{r}
-covariants_file_commits <- function(path = "cluster_tables/21A.Delta_data.json") { # nolint
+covariants_file_commits <- function(path = "cluster_tables/21K.Omicron_data.json") { # nolint
   commits <- gh::gh(
     "/repos/hodcroftlab/covariants/commits?path={path}",
     owner = "hodcroftlab",
@@ -137,7 +136,7 @@ sequences
 
 ## Filter, merge, and save cases notifications and sequences
 
-- Filter sequences to include dates by location starting from when two consecutive weeks have at least two sequences that were positive for the Delta variant and the Delta variant makes up at least 0.001% of available sequences. This filtering step is based on the last available data and then used as a common starting point across all releases. First find the introduction week for each location based on these filtering steps.
+- Filter sequences to include dates by location starting from when two consecutive weeks have at least two sequences that were positive for the Omicron variant and the Omicron variant makes up at least 0.001% of available sequences. This filtering step is based on the last available data and then used as a common starting point across all releases. First find the introduction week for each location based on these filtering steps.
 
 ```{r}
 first_seq <- sequences[,
@@ -166,7 +165,7 @@ filt_sequences <- filt_sequences[week_ending >= intro_date][
 ][]
 ```
 
-- Find the week in each location when 99% of sequences are positive for Delta in the final sequence data for two consequetive weeks and more than 10 sequences are available.
+- Find the week in each location when 99% of sequences are positive for Omicron in the final sequence data for two consequetive weeks and more than 10 sequences are available.
 
 ```{r}
 last_seq <- sequences[seq_available == max(seq_available)][,
@@ -183,35 +182,45 @@ last_seq
 - Restrict included sequences to stop at these dates.
 
 ```{r}
-filt_sequences <- merge(
-  filt_sequences, last_seq[, .(location_name, end_date = week_ending)],
-  by = "location_name"
-)
-filt_sequences[is.na(end_date), end_date := max(week_ending),
-  by = "location_name"
-]
-filt_sequences <- filt_sequences[week_ending <= end_date][
-  ,
-  end_date := NULL
-][]
+if (nrow(last_seq) > 0) {
+  filt_sequences <- merge(
+    filt_sequences, last_seq[, .(location_name, end_date = week_ending)],
+    by = "location_name"
+  )
+  filt_sequences[is.na(end_date), end_date := max(week_ending),
+    by = "location_name"
+  ]
+  filt_sequences <- filt_sequences[week_ending <= end_date][
+    ,
+    end_date := NULL
+  ][]
+}
 ```
 
-- Filter case notifications to start 4 weeks prior to the introduction date of the Delta variant and to stop 4 weeks after Delta has become dominant. Sequences are collected aggregated by week from Sunday whilst cases are aggregated from Saturday so shift start and end dates for sequences by a day.
+- Filter case notifications to start 4 weeks prior to the introduction date of the Omicron variant and to stop 4 weeks after Omicron has become dominant. Sequences are collected aggregated by week from Sunday whilst cases are aggregated from Saturday so shift start and end dates for sequences by a day.
 
 ```{r}
+datasets <- list(
+    cases,
+    first_seq[, .(location_name, intro_date = week_ending - 1)]
+)
+if (nrow(last_seq) > 0) {
+  datasets <- c(
+    datasets,
+    last_seq[, .(location_name, end_date = week_ending - 1)]
+  )
+}
 filt_cases <- Reduce(
   function(x, y) {
     merge(x, y, by = "location_name", all.x = TRUE)
   },
-  list(
-    cases,
-    first_seq[, .(location_name, intro_date = week_ending - 1)],
-    last_seq[, .(location_name, end_date = week_ending - 1)]
-  )
+  datasets
 )
 filt_cases <- filt_cases[date >= (intro_date - 7 * 4)]
-filt_cases <- filt_cases[date <= (end_date + 7 * 4)]
-filt_cases[, c("intro_date", "end_date") := NULL]
+if (nrow(last_seq)) {
+  filt_cases <- filt_cases[date <= (end_date + 7 * 4)]
+}
+suppressWarnings(filt_cases[, c("intro_date", "end_date") := NULL])
 ```
 
 
@@ -333,8 +342,6 @@ seq_change <- merge(
 )
 
 seq_change[, per_latest := share_voc / latest_voc]
-
-seq_change <- seq_change[date <= as.Date("2021-09-01")]
 
 ggplot(seq_change) +
   aes(x = date, y = per_latest, col = seq_available, group = seq_available) +

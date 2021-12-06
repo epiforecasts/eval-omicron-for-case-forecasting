@@ -24,7 +24,8 @@ If making using of the models evaluated in this analysis please also cite [`fore
 
 ## Documentation
 
-```{r, child = "docs/chunks/documentation.Rmd", eval = TRUE}
+```{r, child = "docs/chunks/documentation.Rmd", eval = TRUE, echo = FALSE}
+tmp <- 1
 ```
 
 ## Key files and folders
@@ -58,6 +59,7 @@ Alternatively a docker [container](https://github.com/epiforecasts/eval-omicron-
 
 This analysis in this repository has been implemented using the [`targets`](https://docs.ropensci.org/targets/) package and associated packages. The workflow is defined in [`_targets.md`](https://github.com/epiforecasts/eval-omicron-for-case-forecasting/blob/main/_targets.md) and can be explored interactively using [`_targets.Rmd`](https://github.com/epiforecasts/eval-omicron-for-case-forecasting/blob/main/_targets.Rmd) `Rmarkdown` document. The workflow can be visualised as the following graph.
 
+![](figures/targets-graph.png)
 
 This complete analysis can be recreated using the following (note this may take quite some time even with a fairly large amount of available compute),
 

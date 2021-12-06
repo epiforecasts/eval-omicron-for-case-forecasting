@@ -73,6 +73,8 @@ and can be explored interactively using
 `Rmarkdown` document. The workflow can be visualised as the following
 graph.
 
+![](figures/targets-graph.png)
+
 This complete analysis can be recreated using the following (note this
 may take quite some time even with a fairly large amount of available
 compute),

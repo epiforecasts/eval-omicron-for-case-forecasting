@@ -5,12 +5,12 @@ summarise_forecast_targets <- list(
     fit_summary,
     rbindlist(
       map(list(
-        single_forecasts,
-        two_forecasts
+        single_fits,
+        two_fits
       ), ~ .[, .(
         id, forecast_date, strains, overdispersion, variant_relationship,
         samples, max_rhat, divergent_transitions,
-        per_divergent_transitons, max_treedepth, no_at_max_treedepth,
+        per_divergent_transitions, max_treedepth, no_at_max_treedepth,
         per_at_max_treedepth
       )])
     ),
@@ -18,15 +18,15 @@ summarise_forecast_targets <- list(
   # Combine forecasts into a single data frame
   tar_target(
     forecast_single,
-    unnest_posterior(single_forecasts, target = "forecast"),
+    unnest_posterior(single_fits, target = "forecast"),
   ),
   tar_target(
     forecast_two,
-    unnest_posterior(two_forecasts, target = "forecast"),
+    unnest_posterior(two_fits, target = "forecast"),
   ),
   # Combine all separate forecasts into a single data frame
   tar_target(
-    forecast,
+    forecasts,
     rbindlist(
       list(
         forecast_single,
@@ -38,7 +38,7 @@ summarise_forecast_targets <- list(
   tar_target(
     forecast_cases,
     merge(
-      forecast[value_type == "cases"][type %in% c("Overall", "Combined")][
+      forecasts[value_type == "cases"][type %in% c("Overall", "Combined")][
         ,
         type := NULL
       ],

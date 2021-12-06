@@ -17,7 +17,7 @@ obs_targets <- list(
   ),
   # split data into that available in each forecast week
   tar_target(
-    retro_obs,
+    avail_obs,
     filter_by_availability(obs, date = forecast_dates),
     map(forecast_dates),
     deployment = "worker",

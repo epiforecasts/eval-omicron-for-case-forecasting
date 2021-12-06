@@ -11,7 +11,7 @@ validation <- TRUE
 forecast <- TRUE
 
 # datasets of interest (based on availability in the covariants source)
-sources <- list(source = "Germany")
+sources <- list(source = c("United Kingdom", "Germany"))
 
 # load required packages and watch forecast.vocs for changes
 tar_option_set(
@@ -42,7 +42,7 @@ combined_targets <- tar_map(
   values = sources,
   c(
     obs_targets, # load source specific observations
-    forecast_targets, # forecast
+    fit_targets, # forecast
     summarise_forecast_targets, # summarise forecasts
     score_forecast_targets # score forecasts by source
   ),
@@ -63,6 +63,7 @@ if (validation) {
 }
 if (forecast) {
   targets_list <- c(
+    targets_list,
     combined_targets, # Forecast all dates and scenarios
     summarise_source_targets # Summarise forecasts
   )
